@@ -42,14 +42,6 @@ def extract_info_from_request(data):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZWJ0b3JJZCI6IkVESVpaWlpaWloiLCJlbWFpbCI6ImJlbi5zYXVsQGRvd25lcmdyb3VwLmNvbSIsImV4dGVybmFsUmVmZXJlbmNlIjo2NTY2OCwiZmlyc3ROYW1lIjoiWXVndWFuZyIsImxhc3ROYW1lIjoiRGFuZyIsIm5hbWUiOiJZdWd1YW5nIERhbmciLCJyb2xlTmFtZSI6InRyYXZlbGxlciIsInN1YiI6InRlc3QifQ.4ujBBKDLnnFxxCpJsrwd4OOSnFDqgkajOdV4BAKFxy8"
         message = data["Body"]
 
-    else:
-        platform = data.get("platform")
-        token = data.get("token")
-        message = data.get("message")
-        conversation_id = (
-            data.get("conversation").get("id") if data.get("conversation") else None
-        )
-
     return platform, token, message, conversation_id
 
 

@@ -20,6 +20,7 @@ client = AzureOpenAI(
 )
 
 
+
 @main.route("/")
 def index():
     return "Chatbot REST API Server is running"
@@ -117,14 +118,17 @@ def handle_chat():
 def webhook():
     try:
         # Check the content type of the request
-        if request.content_type == 'application/json':
+        if (
+            request.content_type == "application/json; charset=utf-8"
+            or request.content_type == "application/json"
+        ):
             data = request.json
-        elif request.content_type == 'application/x-www-form-urlencoded':
+        elif request.content_type == "application/x-www-form-urlencoded":
             data = request.form.to_dict()
         else:
             return jsonify({"error": "Unsupported Media Type"}), 415
-        # print(f"Request data: {data}")
 
+        # extract the platform, token, message, and conversation_id from the request
         platform, token, message, conversation_id = extract_info_from_request(data)
 
         # Retrieve session data from Redis
@@ -133,9 +137,7 @@ def webhook():
             return jsonify({"error": "Session not found"}), 404
 
         # Retrieve user chat status and URL
-        email = session_data["metadata"][
-            "email"
-        ]
+        email = session_data["metadata"]["email"]
         user_chat_data = get_user_chat_status(email)
         chat_status = user_chat_data["chatStatus"]
         chat_url = user_chat_data["chatUrl"]
@@ -148,6 +150,9 @@ def webhook():
 
             if response.status_code != 200:
                 logging.error("Failed to forward message to the agent")
+                return jsonify({"error": "Failed to forward message to the agent"}), 500
+            
+            return jsonify({"status": "success"}), 200
 
         else:
             # Interact with Azure OpenAI assistant
@@ -157,21 +162,21 @@ def webhook():
 
             # Check if the reply is valid
             if not reply:
-                return jsonify({"error": "Failed to get a reply from the assistant"}), 500
+                return (
+                    jsonify({"error": "Failed to get a reply from the assistant"}),
+                    500,
+                )
 
             # Send the reply back to the original platform
             if platform == "Teams":
                 reply_Teams(reply, conversation_id)
             elif platform == "WhatsApp":
                 reply_WhatsApp(reply, conversation_id)
-                pass
             else:
                 return jsonify({"error": "Unsupported platform"}), 400
 
             return jsonify({"status": "success"}), 200
 
     except Exception as e:
-        print(f"Error handling webhook: {e}")
+        logging.error(f"Error handling webhook: {e}")
         return jsonify({"error": "Internal Server Error"}), 500
-
-
