@@ -1,11 +1,22 @@
-from flask import Blueprint, request, jsonify, current_app
+import time
+from flask import (
+    Blueprint,
+    request,
+    jsonify,
+    current_app,
+    Response,
+    stream_with_context,
+)
 from flask_jwt_extended import decode_token
 from openai import AzureOpenAI
 import os
 import logging
 import requests
 
-from app.assistant_handlers import get_response_from_assistant
+from app.assistant_handlers import (
+    get_response_from_assistant,
+    get_streaming_response_from_assistant,
+)
 from app.utils import extract_info_from_request, get_user_chat_status
 from app.platform_handlers import reply_Teams, reply_WhatsApp
 
@@ -18,7 +29,6 @@ client = AzureOpenAI(
     api_version="2024-02-15-preview",
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
 )
-
 
 
 @main.route("/")
@@ -114,6 +124,68 @@ def handle_chat():
         return jsonify({"error": "Internal Server Error"}), 500
 
 
+@main.route("/chat_sse", methods=["POST"])
+def handle_chat_sse():
+    try:
+        data = request.json
+        platform = data["platform"]
+        token = data["token"]
+        message = data["message"]
+
+        if not platform or not token or not message:
+            return jsonify({"error": "Missing platform, token, or message"}), 400
+
+        session_data = current_app.config["GET_SESSION"](token)
+        if not session_data:
+            # Decode token to get user metadata
+            metadata = decode_token(token)
+            session_data = {"metadata": metadata}
+
+            # Create a new thread if no session data is found
+            thread = client.beta.threads.create()
+            session_data["thread_id"] = thread.id
+            current_app.config["SAVE_SESSION"](token, session_data)
+
+        # Store the message for the GET request
+        session_data["message"] = message
+        current_app.config["SAVE_SESSION"](token, session_data)
+
+        return jsonify({"status": "session initialized"}), 200
+
+    except Exception as e:
+        print(f"Error initializing chat: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
+
+
+@main.route("/chat_sse_stream", methods=["GET"])
+def handle_chat_sse_stream():
+    try:
+        token = request.args.get("token")
+        platform = request.args.get("platform")
+
+        if not platform or not token:
+            return jsonify({"error": "Missing platform or token"}), 400
+
+        session_data = current_app.config["GET_SESSION"](token)
+        if not session_data or "message" not in session_data:
+            return jsonify({"error": "Session not found or message missing"}), 404
+
+        message = session_data["message"]
+
+        get_streaming_response_from_assistant(session_data["thread_id"], message, client)
+        
+        def generate():
+            for data in get_streaming_response_from_assistant(session_data["thread_id"], message, client):
+                yield f"data: {data}\n\n"
+        
+            
+        return Response(generate(), content_type="text/event-stream")
+
+    except Exception as e:
+        print(f"Error handling chat: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
+
+
 @main.route("/webhook", methods=["POST"])
 def webhook():
     try:
@@ -151,7 +223,7 @@ def webhook():
             if response.status_code != 200:
                 logging.error("Failed to forward message to the agent")
                 return jsonify({"error": "Failed to forward message to the agent"}), 500
-            
+
             return jsonify({"status": "success"}), 200
 
         else:
