@@ -12,6 +12,7 @@ from openai import AzureOpenAI
 import os
 import logging
 import requests
+import urllib.parse
 
 from app.assistant_handlers import (
     get_response_from_assistant,
@@ -176,9 +177,11 @@ def handle_chat_sse_stream():
         
         def generate():
             for data in get_streaming_response_from_assistant(session_data["thread_id"], message, client):
-                yield f"data: {data}\n\n"
-        
-            
+                encoded_data = urllib.parse.quote(data)                
+                yield f"data: {encoded_data}\n\n"
+                
+            yield "data: end of stream\n\n"
+                
         return Response(generate(), content_type="text/event-stream")
 
     except Exception as e:
