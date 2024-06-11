@@ -248,10 +248,7 @@ def get_live_bookings(role, email, debtorId):
     return future_bookings
 
 
-def chat_with_consultant(platform, token, initial_message):
-    # Retrieve and save session data from Redis
-    session_data = current_app.config["GET_SESSION"](token)
-
+def chat_with_consultant(platform, session_data, initial_message):
     if platform != "web":
         payload = {
             "chatId": str(uuid.uuid4()),

@@ -66,7 +66,7 @@ def handle_init():
 
         # Interact with Azure OpenAI assistant
         reply = get_response_from_assistant(
-            platform, token, session_data["thread_id"], message, client
+            platform, session_data, message, client
         )
 
         return jsonify(
@@ -103,7 +103,7 @@ def handle_chat():
 
         # Interact with Azure OpenAI assistant
         reply = get_response_from_assistant(
-            platform, token, session_data["thread_id"], message, client
+            platform, session_data, message, client
         )
 
         # Check if the reply is valid
@@ -173,10 +173,8 @@ def handle_chat_sse_stream():
 
         message = session_data["message"]
 
-        get_streaming_response_from_assistant(session_data["thread_id"], message, client)
-        
         def generate():
-            for data in get_streaming_response_from_assistant(session_data["thread_id"], message, client):
+            for data in get_streaming_response_from_assistant(session_data, message, client):
                 encoded_data = urllib.parse.quote(data)                
                 yield f"data: {encoded_data}\n\n"
                 
@@ -232,7 +230,7 @@ def webhook():
         else:
             # Interact with Azure OpenAI assistant
             reply = get_response_from_assistant(
-                platform, token, session_data["thread_id"], message, client
+                platform, session_data, message, client
             )
 
             # Check if the reply is valid

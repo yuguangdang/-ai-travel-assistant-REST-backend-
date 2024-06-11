@@ -14,8 +14,9 @@ from .functions import (
 
 
 # Without streaming
-def get_response_from_assistant(platform, token, thread_id, message, client):
+def get_response_from_assistant(platform, session_data, message, client):
     try:
+        thread_id = session_data["thread_id"]
         # Add a message to the assistant thread
         print(f"\nclient >", message)
         message = client.beta.threads.messages.create(
@@ -100,7 +101,7 @@ def get_response_from_assistant(platform, token, thread_id, message, client):
                 arguments = json.loads(tool.function.arguments)
                 print(f"{tool.function.name} arguments: {arguments}")
                 initial_message = arguments["initial_message"]
-                chat_response = chat_with_consultant(platform, token, initial_message)
+                chat_response = chat_with_consultant(platform, session_data, initial_message)
                 print(f"{tool.function.name} respones: {chat_response}")
                 response = "Connecting the client to a consultnat in a new tab."
                 tool_outputs.append(
@@ -133,11 +134,40 @@ def get_response_from_assistant(platform, token, thread_id, message, client):
 
 
 # With streaming
+def get_streaming_response_from_assistant(session_data, message, client):
+    event_handler = EventHandler(session_data, client)
+    thread_id = session_data["thread_id"]
+    # Add a message to the assistant thread
+    print(f"\nclient >", message)
+    message = client.beta.threads.messages.create(
+        thread_id=thread_id, role="user", content=message
+    )
+    # Stream the assistant's response to the message
+    with client.beta.threads.runs.stream(
+        thread_id=thread_id,
+        assistant_id=os.getenv("ASSISTANT_ID"),
+        event_handler=event_handler,
+    ) as stream:
+        for delta in stream.text_deltas:
+            print(delta, end="", flush=True)
+            yield delta
+
+    if event_handler.tool_outputs and event_handler.run_id:
+        with client.beta.threads.runs.submit_tool_outputs_stream(
+            thread_id=thread_id,
+            run_id=event_handler.run_id,
+            tool_outputs=event_handler.tool_outputs,
+        ) as stream:
+            for delta in stream.text_deltas:
+                print(delta, end="", flush=True)
+                yield delta
+
 class EventHandler(AssistantEventHandler):
-    def __init__(self, client):
+    def __init__(self, session_data, client):
         super().__init__()
         self.client = client
-        self.tool_outputs  = None
+        self.session_data = session_data
+        self.tool_outputs = None
         self.run_id = None
 
     @override
@@ -228,41 +258,16 @@ class EventHandler(AssistantEventHandler):
                 arguments = json.loads(tool.function.arguments)
                 print(f"{tool.function.name} arguments: {arguments}")
                 initial_message = arguments["initial_message"]
-                chat_response = chat_with_consultant(initial_message)
+                chat_response = chat_with_consultant(
+                    "web", self.session_data, initial_message
+                )
                 print(chat_response)
-                self.socketio.emit("chat_with_consultant", chat_response, room=self.sid)
                 response = "Connecting the client to a consultnat in a new tab."
                 tool_outputs.append(
                     {"tool_call_id": tool.id, "output": json.dumps(response)}
                 )
 
-        # Submit the tool outputs  
+        # Submit the tool outputs
         self.tool_outputs = tool_outputs
 
 
-def get_streaming_response_from_assistant(thread_id, message, client):
-    event_handler=EventHandler(client)
-    # Add a message to the assistant thread
-    print(f"\nclient >", message)
-    message = client.beta.threads.messages.create(
-        thread_id=thread_id, role="user", content=message
-    )
-    # Stream the assistant's response to the message
-    with client.beta.threads.runs.stream(
-        thread_id=thread_id,
-        assistant_id=os.getenv("ASSISTANT_ID"),
-        event_handler=event_handler,
-    ) as stream:
-        for delta in stream.text_deltas:
-            print(delta, end="", flush=True)
-            yield delta
-    
-    if event_handler.tool_outputs and event_handler.run_id:
-        with client.beta.threads.runs.submit_tool_outputs_stream(
-            thread_id=thread_id,
-            run_id=event_handler.run_id,
-            tool_outputs=event_handler.tool_outputs,
-        ) as stream:
-            for delta in stream.text_deltas:
-                print(delta, end="", flush=True)
-                yield delta
