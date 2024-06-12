@@ -1,11 +1,10 @@
-import time
+import json
 from flask import (
     Blueprint,
     request,
     jsonify,
     current_app,
     Response,
-    stream_with_context,
 )
 from flask_jwt_extended import decode_token
 from openai import AzureOpenAI
@@ -174,11 +173,15 @@ def handle_chat_sse_stream():
         message = session_data["message"]
 
         def generate():
-            for data in get_streaming_response_from_assistant(session_data, message, client):
-                encoded_data = urllib.parse.quote(data)                
-                yield f"data: {encoded_data}\n\n"
+            for message_chunk in get_streaming_response_from_assistant(session_data, message, client):
+                if isinstance(message_chunk, dict) and "tool_outputs" in message_chunk:
+                    tool_outputs = message_chunk["tool_outputs"]               
+                    yield f"event: tool_outputs\ndata: {json.dumps(tool_outputs)}\n\n"
+                else:
+                    encoded_message_chunk = urllib.parse.quote(message_chunk)                
+                    yield f"event: message\ndata: {encoded_message_chunk}\n\n"
                 
-            yield "data: end of stream\n\n"
+            yield "event: end_of_stream\ndata: end of stream\n\n"
                 
         return Response(generate(), content_type="text/event-stream")
 

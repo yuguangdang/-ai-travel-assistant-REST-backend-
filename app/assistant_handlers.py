@@ -1,6 +1,5 @@
 import json
 import os
-import logging
 from typing_extensions import override
 from openai import AssistantEventHandler
 
@@ -153,6 +152,8 @@ def get_streaming_response_from_assistant(session_data, message, client):
             yield delta
 
     if event_handler.tool_outputs and event_handler.run_id:
+        yield {"tool_outputs": event_handler.tool_outputs}
+        
         with client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=thread_id,
             run_id=event_handler.run_id,
@@ -161,6 +162,7 @@ def get_streaming_response_from_assistant(session_data, message, client):
             for delta in stream.text_deltas:
                 print(delta, end="", flush=True)
                 yield delta
+
 
 class EventHandler(AssistantEventHandler):
     def __init__(self, session_data, client):
@@ -261,10 +263,10 @@ class EventHandler(AssistantEventHandler):
                 chat_response = chat_with_consultant(
                     "web", self.session_data, initial_message
                 )
+                chat_response["added_message"] = "Do not mention the links, just tell the client that he/she will be connected to a consultnat in a new tab."
                 print(chat_response)
-                response = "Connecting the client to a consultnat in a new tab."
                 tool_outputs.append(
-                    {"tool_call_id": tool.id, "output": json.dumps(response)}
+                    {"tool_call_id": tool.id, "output": json.dumps(chat_response)}
                 )
 
         # Submit the tool outputs
