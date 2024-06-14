@@ -100,7 +100,9 @@ def get_response_from_assistant(platform, session_data, message, client):
                 arguments = json.loads(tool.function.arguments)
                 print(f"{tool.function.name} arguments: {arguments}")
                 initial_message = arguments["initial_message"]
-                chat_response = chat_with_consultant(platform, session_data, initial_message)
+                chat_response = chat_with_consultant(
+                    platform, session_data, initial_message
+                )
                 print(f"{tool.function.name} respones: {chat_response}")
                 response = "Connecting the client to a consultnat in a new tab."
                 tool_outputs.append(
@@ -133,14 +135,23 @@ def get_response_from_assistant(platform, session_data, message, client):
 
 
 # With streaming
-def get_streaming_response_from_assistant(session_data, message, client):
+def get_streaming_response_from_assistant(session_data, message, context, client):
     event_handler = EventHandler(session_data, client)
     thread_id = session_data["thread_id"]
     # Add a message to the assistant thread
     print(f"\nclient >", message)
     message = client.beta.threads.messages.create(
-        thread_id=thread_id, role="user", content=message
+        thread_id=thread_id,
+        role="user",
+        content=message,
     )
+
+    message = client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="assistant",
+        content=f"Another agent found some information from CTM website that might be useful for answering client FAQ. Use the context when it's appropriate. Context: {context}",
+    )
+
     # Stream the assistant's response to the message
     with client.beta.threads.runs.stream(
         thread_id=thread_id,
@@ -153,7 +164,7 @@ def get_streaming_response_from_assistant(session_data, message, client):
 
     if event_handler.tool_outputs and event_handler.run_id:
         yield {"tool_outputs": event_handler.tool_outputs}
-        
+
         with client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=thread_id,
             run_id=event_handler.run_id,
@@ -263,7 +274,9 @@ class EventHandler(AssistantEventHandler):
                 chat_response = chat_with_consultant(
                     "web", self.session_data, initial_message
                 )
-                chat_response["added_message"] = "Do not mention the links, just tell the client that he/she will be connected to a consultnat in a new tab."
+                chat_response["added_message"] = (
+                    "Do not mention the links, just tell the client that he/she will be connected to a consultnat in a new tab."
+                )
                 print(chat_response)
                 tool_outputs.append(
                     {"tool_call_id": tool.id, "output": json.dumps(chat_response)}
@@ -271,5 +284,3 @@ class EventHandler(AssistantEventHandler):
 
         # Submit the tool outputs
         self.tool_outputs = tool_outputs
-
-

@@ -17,7 +17,7 @@ from app.assistant_handlers import (
     get_response_from_assistant,
     get_streaming_response_from_assistant,
 )
-from app.utils import extract_info_from_request, get_user_chat_status
+from app.utils import extract_info_from_request, get_context, get_user_chat_status
 from app.platform_handlers import reply_Teams, reply_WhatsApp
 
 main = Blueprint("main", __name__)
@@ -171,9 +171,11 @@ def handle_chat_sse_stream():
             return jsonify({"error": "Session not found or message missing"}), 404
 
         message = session_data["message"]
+        context = get_context(message)
+        # print(f"context: {context}")
 
         def generate():
-            for message_chunk in get_streaming_response_from_assistant(session_data, message, client):
+            for message_chunk in get_streaming_response_from_assistant(session_data, message, context, client):
                 if isinstance(message_chunk, dict) and "tool_outputs" in message_chunk:
                     tool_outputs = message_chunk["tool_outputs"]               
                     yield f"event: tool_outputs\ndata: {json.dumps(tool_outputs)}\n\n"

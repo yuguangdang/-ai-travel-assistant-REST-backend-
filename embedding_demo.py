@@ -8,6 +8,19 @@ import os
 from openai import AzureOpenAI, OpenAI
 import tiktoken
 
+# Initialize OpenAI API key
+# client = AzureOpenAI(
+#     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+#     api_version="2024-02-15-preview",
+#     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+# )
+
+client = OpenAI()
+embedding_model = "text-embedding-3-large"
+# embedding_model = "Embedding"
+chat_model = "gpt-4o"
+# chat_model = "gpt-4"
+
 ############################### Scrape CTM website ################################
 
 # Initialize base URL and visited links set
@@ -117,17 +130,6 @@ def scrape_website(base_url):
 
 
 ############################### Generate Embeddings ################################
-
-
-# Initialize OpenAI API key
-# client = AzureOpenAI(
-#     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-#     api_version="2024-02-15-preview",
-#     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-# )
-
-client = OpenAI()
-
 # response = client.embeddings.create(
 #     input="Your text string goes here",
 #     model="text-embedding-3-small"
@@ -141,15 +143,10 @@ def generate_embeddings(
     output_csv="website_with_embeddings.csv",
     output_pickle="website_with_embeddings.pkl",
 ):
-    # Initialize OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
     # Load scraped data
     df = pd.read_csv(input_csv)
 
-    def get_embedding(
-        text, model="text-embedding-3-small", retry_count=3, wait_time=60
-    ):
+    def get_embedding(text, model=embedding_model, retry_count=3, wait_time=60):
         """
         Get the embedding for a given text using OpenAI's embedding model.
         :param text: The text to get the embedding for
@@ -214,8 +211,7 @@ def generate_embeddings(
 # Load DataFrame with embeddings
 df = pd.read_pickle("website_with_embeddings.pkl")
 
-
-def get_embedding(text, model="text-embedding-3-small"):
+def get_embedding(text, model=embedding_model):
     """
     Get the embedding for a given text using OpenAI's embedding model.
     :param text: The text to get the embedding for
@@ -238,7 +234,7 @@ def compute_similarity(embedding1, embedding2):
     )
 
 
-def query(question, top_n=4):
+def get_context(question, top_n=4):
     """
     Query the embeddings to find the most similar text content.
     :param question: The question to query
@@ -256,11 +252,11 @@ def query(question, top_n=4):
 
 
 def generate_response(question):
-    context = query(question)
+    context = get_context(question)
     print(f"context: {context}")
 
     completion = client.chat.completions.create(
-        model="gpt-4o",
+        model=chat_model,
         messages=[
             {
                 "role": "system",
@@ -280,7 +276,7 @@ def generate_response(question):
 
 
 # Example usage
-question = "how to make a booking?"
+question = "how to go to the brisbane office?"
 answer = generate_response(question)
 print()
 print("Answer to the query:")

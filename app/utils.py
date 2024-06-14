@@ -1,10 +1,16 @@
 import os
 from flask import current_app
+import numpy as np
 import requests
 from colorama import Fore, Style, init
 import logging
+import pandas as pd
+from openai import OpenAI
 
 init(autoreset=True)  # Ensures that colorama resets colors to default after each print
+embedding_model = "text-embedding-3-large"
+
+client = OpenAI()
 
 
 class ColoredFormatter(logging.Formatter):
@@ -69,3 +75,26 @@ def get_user_chat_status(email):
     except requests.exceptions.RequestException as e:
         print(f"Error retrieving data: {e}")
         return {"error": str(e)}
+
+
+def get_context(question, top_n=5):
+    def compute_similarity(embedding1, embedding2):
+        return np.dot(embedding1, embedding2) / (
+            np.linalg.norm(embedding1) * np.linalg.norm(embedding2)
+        )
+
+    def get_embedding(text, model=embedding_model):
+        text = text.replace("\n", " ")
+        response = client.embeddings.create(input=[text], model=model)
+        return response.data[0].embedding
+
+    df = pd.read_pickle("website_with_embeddings.pkl")
+
+    question_embedding = get_embedding(question)
+    df["similarity"] = df["embeddings"].apply(
+        lambda x: compute_similarity(question_embedding, x)
+    )
+    top_results = df.nlargest(top_n, "similarity")
+    context = "\n\n".join(top_results["Content"])
+
+    return context
