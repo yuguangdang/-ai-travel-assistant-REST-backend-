@@ -1,6 +1,6 @@
 ## Overview
 
-This is the backend of the AI travel assistant using Flask and Azure OpenAI. It allows users to interact with an AI travel assistant through various platforms such as Teams and WhatsApp.
+This is the backend of the AI travel assistant using Flask and Azure OpenAI. It allows users to interact with an AI travel assistant through various platforms such as Teams and WhatsApp. It uses SSE to stream the AI response and ensure the backend remains RESTful, hence easy to scale horizontally.
 
 ## Architecture
 <img width="882" height="662" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/32ec8ed4-f30a-43d7-8d72-cbde5081475d">
