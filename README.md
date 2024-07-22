@@ -1,6 +1,6 @@
 ## Overview
 
-This is the backend of the AI travel assistant using Flask and Azure OpenAI. It allows users to interact with an AI travel assistant through various platforms such as Teams and WhatsApp. It uses SSE to stream the AI response and ensure the backend remains RESTful, hence easy to scale horizontally.
+This project showcases an AI assistant chat application that supports three communication methods: standard HTTP, Server-Sent Events (SSE), and WebSocket with streaming capabilities. The frontend dynamically connects to two Flask servers based on the chosen communication method. These Flask servers interface with an OpenAI-powered travel assistant, capable of automating various travel inquiries, such as searching flight schedules and checking visa requirements. To enhance AI responses, the system employs Retrieval-Augmented Generation (RAG). Additionally, the application integrates with an external chat system, providing users with a seamless experience when interacting with both AI travel assistants and human consultants.
 
 ## Architecture
 <img width="882" height="662" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/32ec8ed4-f30a-43d7-8d72-cbde5081475d">
