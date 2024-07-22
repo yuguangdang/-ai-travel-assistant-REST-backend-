@@ -19,5 +19,3 @@ This project showcases an AI assistant chat application that supports three comm
    <img width="420" height="700" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/597ed74e-2908-44c2-b899-961f6a2fb64c">
 </div>
 
-### A demo recording
-https://www.youtube.com/watch?v=jOkmDwpewiE&ab_channel=StaryAI
