@@ -18,7 +18,7 @@ The project is an AI assistant chat application showcasing three distinct commun
 ## Screenshots
    **Main Chat Interface**
    <div>
-      <img width="600" height="650" alt="intro-m" src="https://github.com/user-attachments/assets/2346b0c9-be4c-4b43-b648-b2917b7bfebb">
+      <img width="700" height="600" alt="intro-m" src="https://github.com/user-attachments/assets/78f7782b-4321-44e6-a380-5879271a9f39">
    </div>
    <br>
 
