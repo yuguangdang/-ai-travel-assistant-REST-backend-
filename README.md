@@ -16,13 +16,29 @@ The project is an AI assistant chat application showcasing three distinct commun
 - **Speech recognition:** The application includes speech recognition functionality using the Web Speech API. Users can toggle the microphone to enable or disable speech input, providing a hands-free chat experience.
 
 ## Screenshots
-<div> 
-   <img width="600" height="650" alt="intro-m" src="https://github.com/user-attachments/assets/2346b0c9-be4c-4b43-b648-b2917b7bfebb">
-   <img width="400" height="650" alt="intro-m" src="https://github.com/user-attachments/assets/5ff70724-a9f3-42cd-b878-eab2106db0ee">
-</div>
+   **Main Chat Interface**
+   <div>
+      <img width="600" height="650" alt="intro-m" src="https://github.com/user-attachments/assets/2346b0c9-be4c-4b43-b648-b2917b7bfebb">
+   </div>
+   <br>
 
-<div>
-   <img width="500" height="650" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/72757398-f3bf-4155-bc7a-fa14f5255294">
-   <img width="500" height="650" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/597ed74e-2908-44c2-b899-961f6a2fb64c">
-</div>
+   **Integration with WhatsApp**
+   <div>
+      <img width="400" height="650" alt="intro-m" src="https://github.com/user-attachments/assets/5ff70724-a9f3-42cd-b878-eab2106db0ee">
+   </div>
+   <br>
+
+   **Chat with AI assistant**
+   <div>
+      <img width="400" height="650" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/72757398-f3bf-4155-bc7a-fa14f5255294">
+   </div>
+   <br>
+
+   **Chat with human consultant**
+   <div>
+      <img width="400" height="650" alt="intro-m" src="https://github.com/yuguangdang/ai-travel-assistant-frontend/assets/55920971/597ed74e-2908-44c2-b899-961f6a2fb64c">
+   </div>
+   <br>
+      
+   
 
